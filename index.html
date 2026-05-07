@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>استبيان بناء موقعك</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #dbeafe;
+      --success: #10b981;
+      --danger: #ef4444;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Cairo', 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 16px;
+      direction: rtl;
+    }
+    .form-wrapper { max-width: 680px; margin: 0 auto; }
+
+    /* Header */
+    .form-header { text-align: center; color: white; padding: 20px 0 16px; }
+    .form-header h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+    .form-header p { font-size: 0.85rem; opacity: 0.85; }
+
+    /* Progress */
+    .progress-container { background: rgba(255,255,255,0.25); border-radius: 50px; height: 6px; margin-bottom: 6px; overflow: hidden; }
+    .progress-bar { height: 100%; background: white; border-radius: 50px; transition: width 0.4s ease; }
+    .progress-text { display: flex; justify-content: space-between; color: rgba(255,255,255,0.9); font-size: 0.78rem; margin-bottom: 10px; }
+
+    /* Dots */
+    .step-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 14px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3); transition: all 0.3s; }
+    .dot.active { background: white; width: 24px; border-radius: 4px; }
+    .dot.done { background: rgba(255,255,255,0.65); }
+
+    /* Card */
+    .form-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      margin-bottom: 14px;
+    }
+
+    /* Step */
+    .step { display: none; }
+    .step.active { display: block; }
+
+    .step-title { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 2px solid var(--gray-100); }
+    .step-icon { width: 40px; height: 40px; background: var(--primary-light); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .step-title h2 { font-size: 1rem; font-weight: 700; color: var(--gray-800); }
+    .step-title p { font-size: 0.75rem; color: var(--gray-400); margin-top: 2px; }
+
+    /* Fields */
+    .field-group { margin-bottom: 18px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--gray-700); margin-bottom: 7px; }
+    .required { color: var(--danger); }
+    .optional { color: var(--gray-400); font-weight: 400; font-size: 0.75rem; }
+    input[type="text"], input[type="email"], input[type="tel"], input[type="url"], input[type="date"], textarea, select {
+      width: 100%; padding: 11px 13px; border: 1.5px solid var(--gray-200); border-radius: 10px;
+      font-size: 0.88rem; font-family: 'Cairo', sans-serif; color: var(--gray-800);
+      background: var(--gray-50); transition: border-color 0.2s, box-shadow 0.2s; direction: rtl;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); background: white;
+    }
+    input.error, textarea.error { border-color: var(--danger); }
+    .error-msg { color: var(--danger); font-size: 0.75rem; margin-top: 5px; display: none; }
+    .error-msg.show { display: block; }
+    textarea { resize: vertical; min-height: 85px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 380px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* Choice cards */
+    .choice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    @media (max-width: 380px) { .choice-grid { grid-template-columns: repeat(2, 1fr); } }
+    .choice-card { border: 2px solid var(--gray-200); border-radius: 10px; padding: 12px 6px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--gray-50); }
+    .choice-card:hover, .choice-card.selected { border-color: var(--primary); background: var(--primary-light); }
+    .choice-card input { display: none; }
+    .choice-card .icon { font-size: 1.7rem; margin-bottom: 5px; display: block; }
+    .choice-card .label { font-size: 0.75rem; font-weight: 600; color: var(--gray-700); }
+    .choice-card.selected .label { color: var(--primary-dark); }
+
+    /* Tag checkboxes */
+    .tag-group { display: flex; flex-wrap: wrap; gap: 7px; }
+    .tag-item input { display: none; }
+    .tag-item label {
+      display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px;
+      border: 2px solid var(--gray-200); border-radius: 50px; font-size: 0.8rem;
+      font-weight: 600; color: var(--gray-600); cursor: pointer; transition: all 0.2s;
+      background: var(--gray-50); margin-bottom: 0;
+    }
+    .tag-item input:checked + label { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+
+    /* Upload */
+    .upload-area {
+      border: 2px dashed var(--gray-300); border-radius: 12px; padding: 26px 16px;
+      text-align: center; cursor: pointer; transition: all 0.2s; background: var(--gray-50);
+    }
+    .upload-area:hover { border-color: var(--primary); background: var(--primary-light); }
+    .upload-area.has-file { border-color: var(--success); background: #ecfdf5; }
+    .upload-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .upload-text { font-size: 0.82rem; color: var(--gray-500); line-height: 1.5; }
+    .upload-area input[type="file"] { display: none; }
+    #logo-preview { max-width: 110px; max-height: 70px; margin: 10px auto 0; border-radius: 8px; display: none; }
+
+    /* Color picker */
+    .color-row { display: flex; align-items: center; gap: 10px; }
+    .color-row input[type="color"] { width: 48px; height: 42px; padding: 2px; border-radius: 8px; cursor: pointer; border: 2px solid var(--gray-200); background: none; }
+    .color-row input[type="text"] { flex: 1; }
+
+    /* Style grid */
+    .style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .style-card { border: 2px solid var(--gray-200); border-radius: 10px; padding: 10px 6px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .style-card:hover, .style-card.selected { border-color: var(--primary); background: var(--primary-light); }
+    .style-card input { display: none; }
+    .style-card .si { font-size: 1.4rem; }
+    .style-card .sl { font-size: 0.72rem; color: var(--gray-600); font-weight: 600; margin-top: 3px; }
+    .style-card.selected .sl { color: var(--primary-dark); }
+
+    /* Radio items */
+    .radio-group { display: flex; flex-direction: column; gap: 7px; }
+    .radio-item { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border: 2px solid var(--gray-200); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+    .radio-item:hover { border-color: var(--primary); }
+    .radio-item.selected { border-color: var(--primary); background: var(--primary-light); }
+    .radio-item input { accent-color: var(--primary); width: 17px; height: 17px; flex-shrink: 0; }
+    .radio-item span { font-size: 0.85rem; color: var(--gray-700); font-weight: 500; }
+
+    /* Social fields */
+    .social-field { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+    .social-icon { font-size: 1.3rem; width: 32px; text-align: center; flex-shrink: 0; }
+    .social-field input { flex: 1; margin-bottom: 0; }
+
+    /* Divider */
+    .divider { text-align: center; color: var(--gray-400); font-size: 0.78rem; margin: 12px 0; position: relative; }
+    .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 44%; height: 1px; background: var(--gray-200); }
+    .divider::before { right: 0; } .divider::after { left: 0; }
+
+    /* Hint */
+    .hint { font-size: 0.73rem; color: var(--gray-400); margin-top: 5px; }
+
+    /* No-logo */
+    .no-logo { display: flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer; }
+    .no-logo input { accent-color: var(--primary); width: 16px; height: 16px; }
+    .no-logo span { font-size: 0.82rem; color: var(--gray-500); }
+
+    /* Buttons */
+    .btn-group { display: flex; gap: 10px; margin-top: 24px; }
+    .btn { padding: 13px 24px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; font-family: 'Cairo', sans-serif; cursor: pointer; transition: all 0.2s; border: none; }
+    .btn-primary { background: var(--primary); color: white; flex: 1; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: var(--gray-100); color: var(--gray-600); min-width: 85px; }
+    .btn-secondary:hover { background: var(--gray-200); }
+    .btn-submit { background: var(--success); color: white; flex: 1; }
+    .btn-submit:hover { background: #059669; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Loading */
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Success */
+    #success-screen { display: none; text-align: center; padding: 40px 16px; }
+    .success-emoji { font-size: 4rem; margin-bottom: 14px; }
+    #success-screen h2 { font-size: 1.3rem; color: var(--gray-800); margin-bottom: 8px; }
+    #success-screen p { color: var(--gray-500); font-size: 0.88rem; line-height: 1.7; }
+
+    /* Autosave */
+    .autosave { font-size: 0.7rem; color: rgba(255,255,255,0.6); text-align: center; margin-top: -6px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+<div class="form-wrapper">
+
+  <div class="form-header">
+    <h1>استبيان بناء موقعك 🚀</h1>
+    <p>أجب على الأسئلة التالية لنبدأ بناء موقعك الاحترافي</p>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progress-bar" style="width:16.67%"></div>
+  </div>
+  <div class="progress-text">
+    <span id="step-label">الخطوة 1 من 6</span>
+    <span id="step-name">معلوماتك</span>
+  </div>
+  <div class="step-dots" id="dots"></div>
+
+  <div class="form-card">
+
+    <!-- SUCCESS SCREEN -->
+    <div id="success-screen">
+      <div class="success-emoji">🎉</div>
+      <h2>وصلنا طلبك!</h2>
+      <p>شكراً لك — راح نراجع معلوماتك<br>ونتواصل معك قريباً لنبدأ بناء موقعك 💪</p>
+    </div>
+
+    <form id="main-form">
+
+      <!-- ======== STEP 1: Client Info ======== -->
+      <div class="step active" data-step="1">
+        <div class="step-title">
+          <div class="step-icon">👤</div>
+          <div><h2>معلوماتك</h2><p>نحتاجها للتواصل معك</p></div>
+        </div>
+
+        <div class="field-group">
+          <label>الاسم الكامل <span class="required">*</span></label>
+          <input type="text" id="clientName" placeholder="محمد أحمد">
+          <div class="error-msg" id="err-clientName">هذا الحقل مطلوب</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field-group">
+            <label>رقم الهاتف <span class="required">*</span></label>
+            <input type="tel" id="phone" placeholder="+970 / +972 / +962">
+            <div class="error-msg" id="err-phone">أدخل رقماً صحيحاً</div>
+          </div>
+          <div class="field-group">
+            <label>الإيميل <span class="optional">(اختياري)</span></label>
+            <input type="email" id="email" placeholder="you@example.com">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>اسم المشروع / الشركة <span class="required">*</span></label>
+          <input type="text" id="businessName" placeholder="مثال: مطعم الفردوس">
+          <div class="error-msg" id="err-businessName">هذا الحقل مطلوب</div>
+        </div>
+
+        <div class="field-group">
+          <label>المدينة / البلد <span class="optional">(اختياري)</span></label>
+          <input type="text" id="location" placeholder="رام الله، فلسطين">
+        </div>
+      </div>
+
+      <!-- ======== STEP 2: Type & Languages ======== -->
+      <div class="step" data-step="2">
+        <div class="step-title">
+          <div class="step-icon">🌐</div>
+          <div><h2>نوع الموقع واللغات</h2><p>كيف يكون موقعك؟</p></div>
+        </div>
+
+        <div class="field-group">
+          <label>نوع الموقع <span class="required">*</span></label>
+          <div class="choice-grid" id="siteType-grid">
+            <label class="choice-card" data-value="portfolio">
+              <input type="radio" name="siteType" value="معرض أعمال">
+              <span class="icon">🎨</span><span class="label">معرض أعمال</span>
+            </label>
+            <label class="choice-card" data-value="store">
+              <input type="radio" name="siteType" value="متجر إلكتروني">
+              <span class="icon">🛒</span><span class="label">متجر إلكتروني</span>
+            </label>
+            <label class="choice-card" data-value="restaurant">
+              <input type="radio" name="siteType" value="مطعم / كافيه">
+              <span class="icon">🍽️</span><span class="label">مطعم / كافيه</span>
+            </label>
+            <label class="choice-card" data-value="company">
+              <input type="radio" name="siteType" value="موقع شركة">
+              <span class="icon">🏢</span><span class="label">موقع شركة</span>
+            </label>
+            <label class="choice-card" data-value="clinic">
+              <input type="radio" name="siteType" value="عيادة / طبي">
+              <span class="icon">🏥</span><span class="label">عيادة / طبي</span>
+            </label>
+            <label class="choice-card" data-value="other">
+              <input type="radio" name="siteType" value="غير ذلك">
+              <span class="icon">💡</span><span class="label">غير ذلك</span>
+            </label>
+          </div>
+          <div class="error-msg" id="err-siteType">اختر نوع الموقع</div>
+        </div>
+
+        <div class="field-group" id="other-type-wrap" style="display:none">
+          <label>اشرح نوع موقعك</label>
+          <input type="text" id="siteTypeOther" placeholder="اكتب هنا...">
+        </div>
+
+        <div class="field-group">
+          <label>لغات الموقع <span class="required">*</span></label>
+          <div class="tag-group">
+            <div class="tag-item">
+              <input type="checkbox" id="lang-ar" value="العربية">
+              <label for="lang-ar">🇸🇦 العربية</label>
+            </div>
+            <div class="tag-item">
+              <input type="checkbox" id="lang-en" value="الإنجليزية">
+              <label for="lang-en">🇺🇸 English</label>
+            </div>
+            <div class="tag-item">
+              <input type="checkbox" id="lang-he" value="עברית">
+              <label for="lang-he">🇮🇱 עברית</label>
+            </div>
+          </div>
+          <div class="error-msg" id="err-languages">اختر لغة واحدة على الأقل</div>
+        </div>
+      </div>
+
+      <!-- ======== STEP 3: Branding ======== -->
+      <div class="step" data-step="3">
+        <div class="step-title">
+          <div class="step-icon">🎨</div>
+          <div><h2>الهوية البصرية</h2><p>الشعار والألوان والستايل</p></div>
+        </div>
+
+        <div class="field-group">
+          <label>شعار الموقع (Logo)</label>
+          <div class="upload-area" id="upload-area" onclick="document.getElementById('logo-file').click()">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text" id="upload-text">
+              <strong>اضغط لرفع الشعار</strong><br>
+              PNG, JPG, SVG — الأفضل: SVG بخلفية شفافة
+            </div>
+            <input type="file" id="logo-file" accept="image/*">
+            <img id="logo-preview" alt="معاينة الشعار">
+          </div>
+          <div class="divider">أو</div>
+          <input type="url" id="logoUrl" placeholder="رابط الشعار (Google Drive, Dropbox...)">
+          <label class="no-logo">
+            <input type="checkbox" id="noLogo">
+            <span>ما عندي شعار بعد — بدي مساعدة</span>
+          </label>
+        </div>
+
+        <div class="field-group">
+          <label>اللون الأساسي</label>
+          <div class="color-row">
+            <input type="color" id="primaryColor" value="#2563eb">
+            <input type="text" id="primaryColorHex" placeholder="#2563eb" value="#2563eb" maxlength="7">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>لون ثانوي <span class="optional">(اختياري)</span></label>
+          <div class="color-row">
+            <input type="color" id="secondaryColor" value="#7c3aed">
+            <input type="text" id="secondaryColorHex" placeholder="#7c3aed" value="#7c3aed" maxlength="7">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>ستايل التصميم</label>
+          <div class="style-grid" id="style-grid">
+            <label class="style-card"><input type="radio" name="designStyle" value="عصري"><div class="si">✨</div><div class="sl">عصري</div></label>
+            <label class="style-card"><input type="radio" name="designStyle" value="مينيمال"><div class="si">⬜</div><div class="sl">مينيمال</div></label>
+            <label class="style-card"><input type="radio" name="designStyle" value="كلاسيكي"><div class="si">🏛️</div><div class="sl">كلاسيكي</div></label>
+            <label class="style-card"><input type="radio" name="designStyle" value="جريء"><div class="si">💥</div><div class="sl">جريء</div></label>
+            <label class="style-card"><input type="radio" name="designStyle" value="مرح"><div class="si">🎉</div><div class="sl">مرح</div></label>
+            <label class="style-card"><input type="radio" name="designStyle" value="أنيق"><div class="si">💎</div><div class="sl">أنيق</div></label>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>مواقع أعجبتك <span class="optional">(اختياري)</span></label>
+          <textarea id="referenceSites" placeholder="روابط أو أسماء مواقع تحب شكلها..."></textarea>
+          <div class="hint">💡 هذا يساعدنا نفهم ذوقك بشكل أفضل</div>
+        </div>
+      </div>
+
+      <!-- ======== STEP 4: Sections & Features ======== -->
+      <div class="step" data-step="4">
+        <div class="step-title">
+          <div class="step-icon">📋</div>
+          <div><h2>الأقسام والمميزات</h2><p>اختر ما تحتاجه</p></div>
+        </div>
+
+        <div class="field-group">
+          <label>أقسام الموقع <span class="required">*</span></label>
+          <div class="tag-group">
+            <div class="tag-item"><input type="checkbox" id="s1" value="الرئيسية"><label for="s1">🏠 الرئيسية</label></div>
+            <div class="tag-item"><input type="checkbox" id="s2" value="من نحن"><label for="s2">👥 من نحن</label></div>
+            <div class="tag-item"><input type="checkbox" id="s3" value="الخدمات"><label for="s3">⚙️ الخدمات</label></div>
+            <div class="tag-item"><input type="checkbox" id="s4" value="معرض الأعمال"><label for="s4">🖼️ معرض الأعمال</label></div>
+            <div class="tag-item"><input type="checkbox" id="s5" value="المنتجات"><label for="s5">📦 المنتجات</label></div>
+            <div class="tag-item"><input type="checkbox" id="s6" value="القائمة (منيو)"><label for="s6">🍽️ القائمة</label></div>
+            <div class="tag-item"><input type="checkbox" id="s7" value="المدونة"><label for="s7">📝 المدونة</label></div>
+            <div class="tag-item"><input type="checkbox" id="s8" value="الفريق"><label for="s8">👨‍💼 الفريق</label></div>
+            <div class="tag-item"><input type="checkbox" id="s9" value="آراء العملاء"><label for="s9">⭐ آراء العملاء</label></div>
+            <div class="tag-item"><input type="checkbox" id="s10" value="الأسئلة الشائعة"><label for="s10">❓ الأسئلة الشائعة</label></div>
+            <div class="tag-item"><input type="checkbox" id="s11" value="الأسعار"><label for="s11">💰 الأسعار</label></div>
+            <div class="tag-item"><input type="checkbox" id="s12" value="تواصل معنا"><label for="s12">📞 تواصل معنا</label></div>
+          </div>
+          <div class="error-msg" id="err-sections">اختر قسماً واحداً على الأقل</div>
+        </div>
+
+        <div class="field-group">
+          <label>أقسام إضافية <span class="optional">(اختياري)</span></label>
+          <input type="text" id="customSections" placeholder="مثال: الأخبار، الشركاء، الجوائز...">
+        </div>
+
+        <div class="field-group">
+          <label>مميزات خاصة</label>
+          <div class="tag-group">
+            <div class="tag-item"><input type="checkbox" id="f1" value="نموذج تواصل"><label for="f1">📬 نموذج تواصل</label></div>
+            <div class="tag-item"><input type="checkbox" id="f2" value="زر واتساب"><label for="f2">💬 زر واتساب</label></div>
+            <div class="tag-item"><input type="checkbox" id="f3" value="خريطة جوجل"><label for="f3">📍 خريطة جوجل</label></div>
+            <div class="tag-item"><input type="checkbox" id="f4" value="نظام حجز مواعيد"><label for="f4">📅 حجز مواعيد</label></div>
+            <div class="tag-item"><input type="checkbox" id="f5" value="متجر + دفع إلكتروني"><label for="f5">💳 دفع إلكتروني</label></div>
+            <div class="tag-item"><input type="checkbox" id="f6" value="شات مباشر"><label for="f6">🗨️ شات مباشر</label></div>
+            <div class="tag-item"><input type="checkbox" id="f7" value="نشرة بريدية"><label for="f7">📧 نشرة بريدية</label></div>
+            <div class="tag-item"><input type="checkbox" id="f8" value="تسجيل دخول للمستخدمين"><label for="f8">🔐 تسجيل دخول</label></div>
+            <div class="tag-item"><input type="checkbox" id="f9" value="تحسين محركات البحث SEO"><label for="f9">🔍 تحسين SEO</label></div>
+            <div class="tag-item"><input type="checkbox" id="f10" value="دعم متعدد اللغات"><label for="f10">🌍 تعدد اللغات</label></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== STEP 5: Content & Social ======== -->
+      <div class="step" data-step="5">
+        <div class="step-title">
+          <div class="step-icon">📸</div>
+          <div><h2>المحتوى والسوشيال</h2><p>عندك محتوى جاهز؟</p></div>
+        </div>
+
+        <div class="field-group">
+          <label>هل عندك محتوى جاهز؟ <span class="required">*</span></label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="contentReady" value="نعم، جاهز بالكامل"><span>✅ نعم، جاهز بالكامل</span></label>
+            <label class="radio-item"><input type="radio" name="contentReady" value="جزئي، بعضه جاهز"><span>🔄 جزئي، بعضه جاهز</span></label>
+            <label class="radio-item"><input type="radio" name="contentReady" value="لا، أحتاج مساعدة في المحتوى"><span>❌ لا، أحتاج مساعدة</span></label>
+          </div>
+          <div class="error-msg" id="err-contentReady">اختر خياراً</div>
+        </div>
+
+        <div class="field-group">
+          <label>ما عندك من محتوى؟</label>
+          <div class="tag-group">
+            <div class="tag-item"><input type="checkbox" id="c1" value="نصوص"><label for="c1">📄 نصوص</label></div>
+            <div class="tag-item"><input type="checkbox" id="c2" value="صور"><label for="c2">🖼️ صور</label></div>
+            <div class="tag-item"><input type="checkbox" id="c3" value="فيديو"><label for="c3">🎬 فيديو</label></div>
+            <div class="tag-item"><input type="checkbox" id="c4" value="شعار جاهز"><label for="c4">✏️ شعار</label></div>
+            <div class="tag-item"><input type="checkbox" id="c5" value="بيانات منتجات"><label for="c5">📦 منتجات</label></div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>حسابات السوشيال ميديا <span class="optional">(اختياري)</span></label>
+          <div class="social-field"><span class="social-icon">📸</span><input type="url" id="s-ig" placeholder="رابط Instagram"></div>
+          <div class="social-field"><span class="social-icon">👥</span><input type="url" id="s-fb" placeholder="رابط Facebook"></div>
+          <div class="social-field"><span class="social-icon">🎵</span><input type="url" id="s-tt" placeholder="رابط TikTok"></div>
+          <div class="social-field"><span class="social-icon">🐦</span><input type="url" id="s-tw" placeholder="رابط X (Twitter)"></div>
+          <div class="social-field"><span class="social-icon">💼</span><input type="url" id="s-li" placeholder="رابط LinkedIn"></div>
+          <div class="social-field"><span class="social-icon">▶️</span><input type="url" id="s-yt" placeholder="رابط YouTube"></div>
+        </div>
+
+        <div class="field-group">
+          <label>رقم واتساب للموقع <span class="optional">(اختياري)</span></label>
+          <input type="tel" id="whatsappNum" placeholder="+972501234567">
+          <div class="hint">💡 يُستخدم لزر واتساب في الموقع</div>
+        </div>
+      </div>
+
+      <!-- ======== STEP 6: Technical & Budget ======== -->
+      <div class="step" data-step="6">
+        <div class="step-title">
+          <div class="step-icon">⚙️</div>
+          <div><h2>التقني والميزانية</h2><p>آخر خطوة! 🎯</p></div>
+        </div>
+
+        <div class="field-group">
+          <label>الدومين (اسم الموقع) <span class="required">*</span></label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="domain" value="عندي دومين جاهز"><span>✅ عندي دومين جاهز</span></label>
+            <label class="radio-item"><input type="radio" name="domain" value="أحتاج مساعدة لشراء دومين"><span>🛒 أحتاج مساعدة لشراء دومين</span></label>
+            <label class="radio-item"><input type="radio" name="domain" value="ما أعرف شو يعني دومين"><span>❓ ما أعرف شو يعني</span></label>
+          </div>
+          <div class="error-msg" id="err-domain">اختر خياراً</div>
+        </div>
+
+        <div class="field-group">
+          <label>اسم الدومين <span class="optional">(اختياري)</span></label>
+          <input type="text" id="domainName" placeholder="example.com">
+        </div>
+
+        <div class="field-group">
+          <label>الاستضافة (Hosting) <span class="required">*</span></label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="hosting" value="عندي استضافة جاهزة"><span>✅ عندي استضافة جاهزة</span></label>
+            <label class="radio-item"><input type="radio" name="hosting" value="أحتاج مساعدة"><span>🛒 أحتاج مساعدة</span></label>
+            <label class="radio-item"><input type="radio" name="hosting" value="ما أعرف"><span>❓ ما أعرف</span></label>
+          </div>
+          <div class="error-msg" id="err-hosting">اختر خياراً</div>
+        </div>
+
+        <div class="field-group">
+          <label>الميزانية التقريبية <span class="required">*</span></label>
+          <div class="radio-group">
+            <label class="radio-item"><input type="radio" name="budget" value="أقل من 500$"><span>💵 أقل من 500$</span></label>
+            <label class="radio-item"><input type="radio" name="budget" value="500$ – 1,000$"><span>💵 500$ – 1,000$</span></label>
+            <label class="radio-item"><input type="radio" name="budget" value="1,000$ – 2,500$"><span>💵 1,000$ – 2,500$</span></label>
+            <label class="radio-item"><input type="radio" name="budget" value="أكثر من 2,500$"><span>💵 أكثر من 2,500$</span></label>
+            <label class="radio-item"><input type="radio" name="budget" value="غير محدد / نتفق"><span>🤝 غير محدد / نتفق</span></label>
+          </div>
+          <div class="error-msg" id="err-budget">اختر ميزانيتك التقريبية</div>
+        </div>
+
+        <div class="field-group">
+          <label>الموعد المطلوب للتسليم <span class="optional">(اختياري)</span></label>
+          <input type="date" id="deadline">
+        </div>
+
+        <div class="field-group">
+          <label>ملاحظات إضافية <span class="optional">(اختياري)</span></label>
+          <textarea id="notes" placeholder="أي معلومات أو تفاصيل إضافية تحب تشاركها..."></textarea>
+        </div>
+
+        <div class="field-group">
+          <label>كيف عرفت عنا؟ <span class="optional">(اختياري)</span></label>
+          <select id="referral">
+            <option value="">اختر...</option>
+            <option>إنستغرام</option>
+            <option>فيسبوك</option>
+            <option>تيك توك</option>
+            <option>توصية من شخص</option>
+            <option>جوجل</option>
+            <option>واتساب</option>
+            <option>غير ذلك</option>
+          </select>
+        </div>
+      </div>
+
+    </form><!-- /form -->
+
+    <div class="btn-group" id="btn-group">
+      <button class="btn btn-secondary" id="btn-back" onclick="goBack()" style="display:none">← رجوع</button>
+      <button class="btn btn-primary" id="btn-next" onclick="goNext()">التالي ←</button>
+    </div>
+
+  </div><!-- /card -->
+
+  <p class="autosave" id="autosave-txt">💾 يُحفظ تلقائياً</p>
+
+</div><!-- /wrapper -->
+
+<script>
+  // ─── CONFIG ───────────────────────────────────────────────
+  const SUBMIT_URL = 'https://formsubmit.co/ajax/infoshaklo@gmail.com';
+  // ──────────────────────────────────────────────────────────
+
+  const TOTAL = 6;
+  let cur = 1;
+  const STEP_NAMES = ['معلوماتك', 'النوع واللغات', 'الهوية البصرية', 'الأقسام والمميزات', 'المحتوى والسوشيال', 'التقني والميزانية'];
+
+  // ── PROGRESS ──
+  function renderProgress() {
+    document.getElementById('progress-bar').style.width = (cur / TOTAL * 100) + '%';
+    document.getElementById('step-label').textContent = `الخطوة ${cur} من ${TOTAL}`;
+    document.getElementById('step-name').textContent = STEP_NAMES[cur - 1];
+
+    const dotsEl = document.getElementById('dots');
+    dotsEl.innerHTML = '';
+    for (let i = 1; i <= TOTAL; i++) {
+      const d = document.createElement('div');
+      d.className = 'dot' + (i === cur ? ' active' : i < cur ? ' done' : '');
+      dotsEl.appendChild(d);
+    }
+
+    document.getElementById('btn-back').style.display = cur > 1 ? 'block' : 'none';
+    const btnNext = document.getElementById('btn-next');
+    if (cur === TOTAL) {
+      btnNext.textContent = 'إرسال الاستبيان 🚀';
+      btnNext.className = 'btn btn-submit';
+      btnNext.onclick = submitForm;
+    } else {
+      btnNext.textContent = 'التالي ←';
+      btnNext.className = 'btn btn-primary';
+      btnNext.onclick = goNext;
+    }
+  }
+
+  function showStep(n) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.querySelector(`.step[data-step="${n}"]`).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── VALIDATION ──
+  function clearErr(id) {
+    const e = document.getElementById('err-' + id);
+    if (e) e.classList.remove('show');
+    const i = document.getElementById(id);
+    if (i) i.classList.remove('error');
+  }
+  function showErr(id) {
+    const e = document.getElementById('err-' + id);
+    if (e) e.classList.add('show');
+    const i = document.getElementById(id);
+    if (i) i.classList.add('error');
+  }
+
+  function validate(step) {
+    let ok = true;
+    const fail = (id) => { showErr(id); ok = false; };
+
+    if (step === 1) {
+      ['clientName', 'phone', 'businessName'].forEach(clearErr);
+      if (!v('clientName')) fail('clientName');
+      if (!v('phone') || v('phone').length < 7) fail('phone');
+      if (!v('businessName')) fail('businessName');
+    }
+    if (step === 2) {
+      ['siteType', 'languages'].forEach(clearErr);
+      if (!document.querySelector('input[name="siteType"]:checked')) fail('siteType');
+      const langs = ['lang-ar', 'lang-en', 'lang-he'].filter(id => document.getElementById(id).checked);
+      if (!langs.length) fail('languages');
+    }
+    if (step === 4) {
+      const ids = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10','s11','s12'];
+      if (!ids.some(id => document.getElementById(id).checked)) {
+        document.getElementById('err-sections').classList.add('show');
+        ok = false;
+      } else {
+        document.getElementById('err-sections').classList.remove('show');
+      }
+    }
+    if (step === 5) {
+      clearErr('contentReady');
+      if (!document.querySelector('input[name="contentReady"]:checked')) fail('contentReady');
+    }
+    if (step === 6) {
+      ['domain', 'hosting', 'budget'].forEach(clearErr);
+      if (!document.querySelector('input[name="domain"]:checked')) fail('domain');
+      if (!document.querySelector('input[name="hosting"]:checked')) fail('hosting');
+      if (!document.querySelector('input[name="budget"]:checked')) fail('budget');
+    }
+    return ok;
+  }
+
+  const v = id => (document.getElementById(id) || {}).value?.trim() || '';
+  const checked = name => (document.querySelector(`input[name="${name}"]:checked`) || {}).value || '';
+  const checkboxVals = ids => ids.filter(id => document.getElementById(id)?.checked).map(id => document.getElementById(id).value).join('، ');
+
+  // ── NAV ──
+  function goNext() {
+    if (!validate(cur)) return;
+    cur++;
+    showStep(cur);
+    renderProgress();
+    autoSave();
+  }
+  function goBack() {
+    if (cur > 1) { cur--; showStep(cur); renderProgress(); }
+  }
+
+  // ── COLLECT ──
+  function collect() {
+    return {
+      'الوقت': new Date().toLocaleString('ar-SA'),
+      'الاسم': v('clientName'),
+      'الهاتف': v('phone'),
+      'الإيميل': v('email'),
+      'المشروع': v('businessName'),
+      'الموقع الجغرافي': v('location'),
+      'نوع الموقع': checked('siteType'),
+      'تفصيل النوع': v('siteTypeOther'),
+      'اللغات': checkboxVals(['lang-ar','lang-en','lang-he']),
+      'رابط اللوجو': v('logoUrl'),
+      'اسم ملف اللوجو': document.getElementById('logo-file').files[0]?.name || '',
+      'يحتاج مساعدة لوجو': document.getElementById('noLogo').checked ? 'نعم' : 'لا',
+      'اللون الأساسي': v('primaryColorHex'),
+      'اللون الثانوي': v('secondaryColorHex'),
+      'ستايل التصميم': checked('designStyle'),
+      'مواقع مرجعية': v('referenceSites'),
+      'أقسام الموقع': checkboxVals(['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10','s11','s12']),
+      'أقسام إضافية': v('customSections'),
+      'المميزات': checkboxVals(['f1','f2','f3','f4','f5','f6','f7','f8','f9','f10']),
+      'المحتوى جاهز': checked('contentReady'),
+      'أنواع المحتوى': checkboxVals(['c1','c2','c3','c4','c5']),
+      'انستغرام': v('s-ig'),
+      'فيسبوك': v('s-fb'),
+      'تيك توك': v('s-tt'),
+      'تويتر': v('s-tw'),
+      'لينكدإن': v('s-li'),
+      'يوتيوب': v('s-yt'),
+      'واتساب الموقع': v('whatsappNum'),
+      'الدومين': checked('domain'),
+      'اسم الدومين': v('domainName'),
+      'الاستضافة': checked('hosting'),
+      'الميزانية': checked('budget'),
+      'موعد التسليم': v('deadline'),
+      'ملاحظات': v('notes'),
+      'كيف عرفنا': v('referral'),
+    };
+  }
+
+  // ── SUBMIT ──
+  async function submitForm() {
+    if (!validate(cur)) return;
+    const btn = document.getElementById('btn-next');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> جاري الإرسال...';
+
+    const data = collect();
+    // FormSubmit special fields
+    data['_subject'] = `🚀 طلب موقع جديد — ${data['المشروع'] || data['الاسم']}`;
+    data['_template'] = 'table';
+    data['_captcha'] = 'false';
+
+    try {
+      const res = await fetch(SUBMIT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (json.success === 'true' || json.success === true) {
+        document.getElementById('main-form').style.display = 'none';
+        document.getElementById('btn-group').style.display = 'none';
+        document.getElementById('autosave-txt').style.display = 'none';
+        document.getElementById('success-screen').style.display = 'block';
+        document.querySelector('.progress-container').style.display = 'none';
+        document.querySelector('.progress-text').style.display = 'none';
+        document.getElementById('dots').style.display = 'none';
+        localStorage.removeItem('wf_data');
+      } else {
+        throw new Error('failed');
+      }
+    } catch {
+      btn.disabled = false;
+      btn.textContent = 'إرسال الاستبيان 🚀';
+      alert('حدث خطأ. تحقق من الاتصال وحاول مجدداً.');
+    }
+  }
+
+  // ── AUTO SAVE ──
+  function autoSave() {
+    try {
+      localStorage.setItem('wf_data', JSON.stringify({ step: cur, ...collect() }));
+      const el = document.getElementById('autosave-txt');
+      el.textContent = '✅ تم الحفظ';
+      setTimeout(() => { el.textContent = '💾 يُحفظ تلقائياً'; }, 2000);
+    } catch {}
+  }
+
+  // ── CHOICE CARDS ──
+  document.querySelectorAll('#siteType-grid .choice-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('#siteType-grid .choice-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      document.getElementById('other-type-wrap').style.display =
+        card.dataset.value === 'other' ? 'block' : 'none';
+    });
+  });
+
+  document.querySelectorAll('#style-grid .style-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('#style-grid .style-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+
+  document.querySelectorAll('.radio-item').forEach(item => {
+    item.addEventListener('click', () => {
+      item.closest('.radio-group').querySelectorAll('.radio-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+    });
+  });
+
+  // ── COLOR SYNC ──
+  ['primary', 'secondary'].forEach(key => {
+    document.getElementById(key + 'Color').addEventListener('input', function () {
+      document.getElementById(key + 'ColorHex').value = this.value;
+    });
+    document.getElementById(key + 'ColorHex').addEventListener('input', function () {
+      if (/^#[0-9A-Fa-f]{6}$/.test(this.value))
+        document.getElementById(key + 'Color').value = this.value;
+    });
+  });
+
+  // ── LOGO UPLOAD ──
+  document.getElementById('logo-file').addEventListener('change', function () {
+    if (!this.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById('logo-preview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      document.getElementById('upload-area').classList.add('has-file');
+      document.getElementById('upload-text').innerHTML =
+        `<strong>${this.files[0].name}</strong><br>✅ تم اختيار الملف`;
+    };
+    reader.readAsDataURL(this.files[0]);
+  });
+
+  // ── AUTO SAVE ON CHANGE ──
+  document.addEventListener('change', autoSave);
+  document.addEventListener('input', () => setTimeout(autoSave, 800));
+
+  // ── INIT ──
+  renderProgress();
+</script>
+</body>
+</html>
